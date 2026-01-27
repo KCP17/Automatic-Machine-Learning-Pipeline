@@ -5,6 +5,8 @@ on:
     paths:
       - data/**
       - training/**
+      - requirements.txt
+      - .github/workflows/**
 
 jobs:
   train:
