@@ -1,0 +1,16 @@
+# Trained models (NEVER push to GitHub)
+training/models/
+
+# Hugging Face cache
+.cache/
+.huggingface/
+
+# Python
+__pycache__/
+*.pyc
+
+# Data (optional)
+data/raw/
+
+# Secrets
+.env

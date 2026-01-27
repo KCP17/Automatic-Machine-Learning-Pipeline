@@ -1,0 +1,33 @@
+name: Auto Train Model
+
+on:
+  push:
+    paths:
+      - data/**
+      - training/**
+
+jobs:
+  train:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: "3.10"
+
+    - name: Install dependencies
+      run: |
+        pip install -r requirements.txt
+
+    - name: Train model
+      run: |
+        python training/train.py
+
+    - name: Push model to Hugging Face
+      env:
+        HF_TOKEN: ${{ secrets.HF_TOKEN }}
+      run: |
+        python training/push_model.py
