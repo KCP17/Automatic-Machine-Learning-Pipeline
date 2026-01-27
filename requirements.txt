@@ -3,3 +3,4 @@ datasets
 torch
 scikit-learn
 huggingface_hub
+accelerate>=1.1.0
