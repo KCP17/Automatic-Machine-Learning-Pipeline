@@ -12,7 +12,7 @@ timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
 OUTPUT_DIR = f"models/model_{timestamp}"
 
 # Load dataset
-dataset = load_dataset("csv", data_files="../data/raw.csv")
+dataset = load_dataset("csv", data_files="data/raw.csv")
 
 # Train/validation split
 dataset = dataset["train"].train_test_split(test_size=0.2)
