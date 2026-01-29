@@ -9,8 +9,5 @@ training/models/
 __pycache__/
 *.pyc
 
-# Data (optional)
-data/raw/
-
 # Secrets
 .env
