@@ -5,4 +5,4 @@ scikit-learn>=1.5.0
 numpy>=1.26
 huggingface_hub>=1.0.0,<2
 accelerate>=1.1.0
-dvc[gdrive]>=3.50.0
+dvc[gs]>=3.50.0

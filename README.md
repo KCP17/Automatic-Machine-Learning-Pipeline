@@ -15,7 +15,7 @@ data/raw.csv (DVC)  ──►  training/train.py  ──►  models/model_<ts>/ 
 
 | Path | Purpose |
 |---|---|
-| `data/raw.csv` | Training data. Tracked by DVC, **not** stored in git. |
+| `data/raw.csv` | Training data. Tracked by DVC in a GCS bucket, **not** stored in git. |
 | `data/raw.csv.dvc` | The pointer git *does* track. |
 | `training/train.py` | Fine-tunes the model and exports a run directory. |
 | `training/push_model.py` | Uploads the most recent run to the Hub. |
@@ -58,24 +58,31 @@ without a code change:
 `push_model.py` reads `HF_REPO_ID` (default `Kiernan1410/auto-ml-model`) and
 requires `HF_TOKEN`.
 
+## Data remote (Google Cloud Storage)
+
+The dataset lives in a GCS bucket, tracked by DVC. `.dvc/config` holds the
+bucket URL; credentials stay out of git.
+
+**Local setup** (one time):
+
+```bash
+dvc remote modify --local storage credentialpath /path/to/gcp-sa-key.json
+dvc pull        # or `dvc push` after changing the data
+```
+
+`--local` writes `.dvc/config.local`, which is git-ignored.
+
 ## Required repository secrets
 
 Set these under **Settings → Secrets and variables → Actions**.
 
-- **`GDRIVE_CREDENTIALS_DATA`** — Google credentials that can *read* the Drive
-  folder backing the DVC remote. Without it CI has no dataset, because
-  `data/raw.csv` is intentionally not in git. The workflow accepts either a
-  service-account key (recommended, does not expire) or a cached OAuth user
-  token, and detects which one it was given.
+- **`GCP_SA_KEY`** — the full JSON of a Google Cloud service-account key with
+  read access to the bucket (`roles/storage.objectViewer`). Without it CI has
+  no dataset, because `data/raw.csv` is intentionally not in git.
 - **`HF_TOKEN`** — a Hugging Face **write** token. Publishing is skipped rather
   than failed when this is absent.
 
-The data must also exist in the remote: run `dvc push` locally at least once.
-
-> Push from your own Google account, not the service account. Service accounts
-> have no Drive storage quota of their own, so uploading into a personal My
-> Drive folder fails with `storageQuotaExceeded`. Reading is unaffected, which
-> is all CI does.
+The data must also exist in the bucket: run `dvc push` locally at least once.
 
 The workflow trains on every push and pull request, but only publishes from
 `main`.
@@ -85,4 +92,4 @@ The workflow trains on every push and pull request, but only publishes from
 `data/raw.csv` ships with four rows, which is enough to exercise the pipeline
 but far too few to learn anything — expect a near-random model and an evaluation
 set of a single example. Add real rows, then `dvc add data/raw.csv && dvc push`
-and commit the updated `.dvc` pointer to trigger a retrain.
+and commit the updated `data/raw.csv.dvc` pointer to trigger a retrain.

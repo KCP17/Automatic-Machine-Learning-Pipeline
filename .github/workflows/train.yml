@@ -27,7 +27,7 @@ jobs:
     env:
       # Surfaced as job-level env so steps can branch on whether a secret exists;
       # a step's own `env:` block is not visible to its `if:` condition.
-      GDRIVE_CREDENTIALS_DATA: ${{ secrets.GDRIVE_CREDENTIALS_DATA }}
+      GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
       HF_TOKEN: ${{ secrets.HF_TOKEN }}
 
     steps:
@@ -53,29 +53,23 @@ jobs:
         python -c "import torch; print('torch', torch.__version__)"
 
     - name: Pull dataset from DVC remote
-      if: env.GDRIVE_CREDENTIALS_DATA != ''
+      if: env.GCP_SA_KEY != ''
       run: |
-        # GDRIVE_CREDENTIALS_DATA may hold either a service-account key or a
-        # cached OAuth user token. dvc-gdrive only treats it as a service
-        # account when gdrive_use_service_account is set in the DVC config --
-        # the env var alone is not enough, and without the flag it falls back
-        # to an interactive browser login that can never complete on a runner.
-        # --local writes .dvc/config.local, which is git-ignored, so developer
-        # clones keep using their own Google login.
-        if python -c "import json, os, sys; sys.exit(0 if json.loads(os.environ['GDRIVE_CREDENTIALS_DATA']).get('type') == 'service_account' else 1)"; then
-          echo "Detected a service-account key; enabling service-account auth."
-          dvc remote modify --local storage gdrive_use_service_account true
-        else
-          echo "Detected OAuth user credentials; using them as-is."
-        fi
+        # The DVC remote is a GCS bucket. Write the service-account key to a
+        # file and point DVC at it through .dvc/config.local (git-ignored),
+        # exactly as a local checkout does. gcsfs would also honour a
+        # GOOGLE_APPLICATION_CREDENTIALS env var, but going through
+        # credentialpath keeps the local and CI setup identical.
+        printf '%s' "$GCP_SA_KEY" > "$RUNNER_TEMP/gcp-sa-key.json"
+        dvc remote modify --local storage credentialpath "$RUNNER_TEMP/gcp-sa-key.json"
         dvc pull --verbose
 
     - name: Verify dataset is present
       run: |
         if [ ! -f data/raw.csv ]; then
           echo "::error::data/raw.csv is missing. It is tracked by DVC and not stored in git."
-          echo "::error::Add a GDRIVE_CREDENTIALS_DATA repository secret (a Google service-account"
-          echo "::error::JSON with access to the DVC remote) so this workflow can run 'dvc pull'."
+          echo "::error::Add a GCP_SA_KEY repository secret (a Google Cloud service-account JSON"
+          echo "::error::key with read access to the GCS bucket) so this workflow can run 'dvc pull'."
           exit 1
         fi
         wc -l data/raw.csv
