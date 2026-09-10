@@ -66,11 +66,14 @@ bucket URL; credentials stay out of git.
 **Local setup** (one time):
 
 ```bash
-dvc remote modify --local storage credentialpath /path/to/gcp-sa-key.json
-dvc pull        # or `dvc push` after changing the data
+gcloud auth application-default login   # sign in with your own Google account
+dvc pull                                # or `dvc push` after changing the data
 ```
 
-`--local` writes `.dvc/config.local`, which is git-ignored.
+`gcsfs` picks those credentials up automatically — no DVC credential config is
+needed locally. To use a service-account key instead:
+`dvc remote modify --local storage credentialpath /path/to/key.json`
+(`--local` writes the git-ignored `.dvc/config.local`).
 
 ## Required repository secrets
 
