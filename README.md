@@ -11,6 +11,9 @@ data/raw.csv (DVC)  ──►  training/train.py  ──►  models/model_<ts>/ 
         └────────────── .github/workflows/train.yml orchestrates ────────────┘
 ```
 
+Live model: **[Kiernan1410/auto-ml-model](https://huggingface.co/Kiernan1410/auto-ml-model)**
+— currently ~0.83 accuracy / F1 on a held-out split of the dataset below.
+
 ## Layout
 
 | Path | Purpose |
@@ -28,12 +31,15 @@ data/raw.csv (DVC)  ──►  training/train.py  ──►  models/model_<ts>/ 
 ```bash
 pip install -r requirements.txt
 
-dvc pull                        # fetch data/raw.csv from the DVC remote
+dvc pull                        # fetch data/raw.csv (needs remote auth — see below)
 python training/train.py        # writes models/model_<timestamp>/
 
 export HF_TOKEN=hf_...          # a write token
 python training/push_model.py   # publishes the newest run
 ```
+
+A fresh clone can't `dvc pull` until the [data remote](#data-remote-google-cloud-storage)
+is authenticated.
 
 `train.py` writes a self-contained directory containing the weights, the
 tokenizer, a `metrics.json`, and a generated model card. `push_model.py` reads
@@ -52,7 +58,7 @@ without a code change:
 | `BATCH_SIZE` | `8` | Per-device batch size. |
 | `LEARNING_RATE` | `5e-5` | Optimizer learning rate. |
 | `TEST_SIZE` | `0.2` | Fraction held out for evaluation. |
-| `MAX_LENGTH` | `256` | Token truncation length. |
+| `MAX_LENGTH` | `256` | Token truncation length. CI sets `128` (the reviews are short). |
 | `SEED` | `42` | Seed for the split and for training. |
 | `LABEL_NAMES` | `negative,positive` | Comma-separated `id2label` names. |
 
@@ -80,9 +86,10 @@ needed locally. To use a service-account key instead:
 
 Set these under **Settings → Secrets and variables → Actions**.
 
-- **`GCP_SA_KEY`** — the full JSON of a Google Cloud service-account key with
-  read access to the bucket (`roles/storage.objectViewer`). Without it CI has
-  no dataset, because `data/raw.csv` is intentionally not in git.
+- **`GCP_SA_KEY`** — the full JSON of a Google Cloud service-account key for the
+  bucket. CI only reads, so `roles/storage.objectViewer` is the minimum; this
+  project's key has `roles/storage.objectAdmin` so the same credential can also
+  `dvc push`. Without it CI has no dataset, because `data/raw.csv` is not in git.
 - **`HF_TOKEN`** — a Hugging Face **write** token. Publishing is skipped rather
   than failed when this is absent.
 
