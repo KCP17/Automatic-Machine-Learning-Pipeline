@@ -70,6 +70,10 @@ def main() -> None:
         repo_type="model",
         commit_message=commit_message,
         commit_description=f"Pushed at {datetime.now(timezone.utc):%Y-%m-%d %H:%M:%S} UTC.",
+        # Each publish should mirror exactly this run: drop anything already in
+        # the repo that this upload does not replace (e.g. stale training
+        # checkpoints from an earlier layout). Runs in one atomic commit.
+        delete_patterns=["*"],
     )
     print("Upload complete.")
 
