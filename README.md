@@ -17,6 +17,7 @@ data/raw.csv (DVC)  ──►  training/train.py  ──►  models/model_<ts>/ 
 |---|---|
 | `data/raw.csv` | Training data. Tracked by DVC in a GCS bucket, **not** stored in git. |
 | `data/raw.csv.dvc` | The pointer git *does* track. |
+| `training/prepare_data.py` | Regenerates `data/raw.csv` from the source dataset (manual, not CI). |
 | `training/train.py` | Fine-tunes the model and exports a run directory. |
 | `training/push_model.py` | Uploads the most recent run to the Hub. |
 | `.github/workflows/train.yml` | Runs the whole thing in CI. |
@@ -90,9 +91,21 @@ The data must also exist in the bucket: run `dvc push` locally at least once.
 The workflow trains on every push and pull request, but only publishes from
 `main`.
 
-## Note on the sample dataset
+## The dataset
 
-`data/raw.csv` ships with four rows, which is enough to exercise the pipeline
-but far too few to learn anything — expect a near-random model and an evaluation
-set of a single example. Add real rows, then `dvc add data/raw.csv && dvc push`
-and commit the updated `data/raw.csv.dvc` pointer to trigger a retrain.
+`data/raw.csv` is a 3,000-row stratified sample (1,500 / 1,500) of the
+**Rotten Tomatoes** movie-review sentiment corpus — short single-sentence
+reviews, `label` 0 = negative, 1 = positive. The size keeps a CPU CI run to a
+few minutes while still producing meaningful accuracy/F1.
+
+To change it, edit `training/prepare_data.py` (or its `SOURCE_DATASET` /
+`SAMPLE_SIZE` env vars), then:
+
+```bash
+python training/prepare_data.py
+dvc add data/raw.csv && dvc push
+git add data/raw.csv.dvc && git commit -m "Refresh dataset" && git push
+```
+
+The final push retrains and republishes. `prepare_data.py` is a manual tool —
+CI only ever consumes the committed `data/raw.csv.dvc` pointer.

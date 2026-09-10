@@ -75,6 +75,10 @@ jobs:
         wc -l data/raw.csv
 
     - name: Train model
+      # Rotten Tomatoes reviews are short (<=~65 tokens); 128 never truncates
+      # and roughly halves the compute versus the 256 default on the CPU runner.
+      env:
+        MAX_LENGTH: "128"
       run: python training/train.py
 
     - name: Upload model as workflow artifact
