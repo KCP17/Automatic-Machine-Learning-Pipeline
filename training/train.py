@@ -196,8 +196,16 @@ def main() -> None:
     )
 
     trainer.train()
-    metrics = trainer.evaluate()
-    print(f"Evaluation: {metrics}")
+    raw_metrics = trainer.evaluate()
+    print(f"Evaluation: {raw_metrics}")
+
+    # Keep the quality metrics; drop Trainer's timing/throughput/epoch noise.
+    noise = ("_runtime", "_samples_per_second", "_steps_per_second")
+    metrics = {
+        key.removeprefix("eval_"): value
+        for key, value in raw_metrics.items()
+        if key != "epoch" and not key.endswith(noise)
+    }
 
     run_dir.mkdir(parents=True, exist_ok=True)
     trainer.save_model(str(run_dir))
