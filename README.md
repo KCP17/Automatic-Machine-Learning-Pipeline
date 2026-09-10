@@ -1,4 +1,4 @@
-# Automatic Machine Learning Pipeline
+# Continuous Training Pipeline
 
 A minimal end-to-end MLOps loop: the dataset is versioned with **DVC**, a
 **DistilBERT** text classifier is fine-tuned on it, and every successful run is
@@ -135,7 +135,7 @@ on:
 `data/raw.csv` is git-ignored, but `data/raw.csv.dvc` — which DVC rewrites
 whenever the data changes — sits under `data/`, so committing it fires a run.
 
-### Worked example — commit [`5586213`](https://github.com/KCP17/Automatic-Machine-Learning-Pipeline/commit/5586213)
+### Worked example — commit [`5586213`](https://github.com/KCP17/Continuous-Training-Pipeline/commit/5586213)
 
 That commit changed **one file, no code** — it grew the sample from 3,000 to
 4,000 rows:
@@ -150,7 +150,7 @@ What happened, with no manual step:
 | Time (UTC) | Event |
 |---|---|
 | 13:49:11 | `git push` — commit `5586213`, only `data/raw.csv.dvc` |
-| 13:49:21 | workflow run [#15](https://github.com/KCP17/Automatic-Machine-Learning-Pipeline/actions/runs/34485049591) starts automatically (`event: push`) |
+| 13:49:21 | workflow run [#15](https://github.com/KCP17/Continuous-Training-Pipeline/actions/runs/34485049591) starts automatically (`event: push`) |
 | 13:59 | pulled the new data from GCS, trained (~10 min), evaluated |
 | 14:01:17 | [new model `model_20260910_135054`](https://huggingface.co/Kiernan1410/auto-ml-model/commits/main) pushed to the Hub |
 
@@ -162,8 +162,8 @@ is one automated commit per run. Accuracy tracks the dataset — nothing else ch
 | Dataset | Triggering commit | Published model | Held-out accuracy |
 |---|---|---|---|
 | 4 rows (placeholder) | — | `model_20260910_125754` | 0.00 |
-| 3,000 rows | [`361a9f9`](https://github.com/KCP17/Automatic-Machine-Learning-Pipeline/commit/361a9f9) | `model_20260910_131807` | 0.83 |
-| 4,000 rows | [`5586213`](https://github.com/KCP17/Automatic-Machine-Learning-Pipeline/commit/5586213) | `model_20260910_135054` | 0.85 |
+| 3,000 rows | [`361a9f9`](https://github.com/KCP17/Continuous-Training-Pipeline/commit/361a9f9) | `model_20260910_131807` | 0.83 |
+| 4,000 rows | [`5586213`](https://github.com/KCP17/Continuous-Training-Pipeline/commit/5586213) | `model_20260910_135054` | 0.85 |
 
 ### Try it
 
@@ -171,5 +171,5 @@ is one automated commit per run. Accuracy tracks the dataset — nothing else ch
 SAMPLE_SIZE=2000 python training/prepare_data.py   # any change to the data
 dvc add data/raw.csv && dvc push
 git commit -am "Shrink the sample" && git push
-# watch: github.com/KCP17/Automatic-Machine-Learning-Pipeline/actions
+# watch: github.com/KCP17/Continuous-Training-Pipeline/actions
 ```

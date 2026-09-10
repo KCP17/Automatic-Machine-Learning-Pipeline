@@ -103,13 +103,13 @@ base_model: {MODEL_NAME}
 pipeline_tag: text-classification
 tags:
 - text-classification
-- generated-by-automatic-ml-pipeline
+- generated-by-continuous-training-pipeline
 ---
 
 # {run_dir.name}
 
 Fine-tuned from [`{MODEL_NAME}`](https://huggingface.co/{MODEL_NAME}) by the
-[Automatic ML Pipeline](https://github.com/KCP17/Automatic-Machine-Learning-Pipeline),
+[Continuous Training Pipeline](https://github.com/KCP17/Continuous-Training-Pipeline),
 which retrains and republishes automatically whenever the dataset or training
 code changes.
 
