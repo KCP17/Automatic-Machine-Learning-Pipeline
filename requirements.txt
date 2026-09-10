@@ -1,8 +1,16 @@
-transformers>=5.0.0,<6
-datasets>=4.0.0,<5
+# The Hugging Face training stack is pinned exactly: it ships breaking changes
+# across minor versions (transformers 5.x dropped TrainingArguments(logging_dir=)
+# partway through the series), and this pipeline retrains unattended. Bump these
+# deliberately and let CI verify the bump.
+transformers==5.17.0
+tokenizers==0.23.2
+datasets==4.8.5
+accelerate==1.15.0
+huggingface_hub==1.31.0
+
+# Only small, long-stable API surfaces are used here, so a compatible range is
+# fine and picks up fixes for free.
 torch>=2.5.0
-scikit-learn>=1.5.0
-numpy>=1.26
-huggingface_hub>=1.0.0,<2
-accelerate>=1.1.0
-dvc[gs]>=3.50.0
+scikit-learn>=1.5.0,<2
+numpy>=1.26,<3
+dvc[gs]>=3.50.0,<4

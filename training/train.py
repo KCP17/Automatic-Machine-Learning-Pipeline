@@ -174,18 +174,15 @@ def main() -> None:
     args = TrainingArguments(
         output_dir=str(checkpoint_dir),
         eval_strategy="epoch",
-        # The final model is exported explicitly below, so per-epoch checkpoints
-        # would only cost disk and CI time. Deliberately no load_best_model_at_end:
-        # transformers 5.0 reloads a best checkpoint without remapping the legacy
-        # LayerNorm gamma/beta keys, which silently mixes best and final weights.
+        # The final model is exported explicitly below (trainer.save_model +
+        # tokenizer), so per-epoch checkpoints would only cost disk and CI time.
         save_strategy="no",
         per_device_train_batch_size=BATCH_SIZE,
         per_device_eval_batch_size=BATCH_SIZE,
         num_train_epochs=NUM_EPOCHS,
         learning_rate=LEARNING_RATE,
-        logging_dir=str(REPO_ROOT / "logs"),
         seed=SEED,
-        report_to=[],
+        report_to="none",
     )
 
     trainer = Trainer(
