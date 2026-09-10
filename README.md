@@ -60,17 +60,22 @@ requires `HF_TOKEN`.
 
 ## Required repository secrets
 
-The workflow needs two secrets under **Settings → Secrets and variables →
-Actions**:
+Set these under **Settings → Secrets and variables → Actions**.
 
-- **`GDRIVE_CREDENTIALS_DATA`** — the full JSON of a Google Cloud *service
-  account* that can read the Drive folder backing the DVC remote. Without it CI
-  has no dataset, because `data/raw.csv` is intentionally not in git. Create the
-  service account, enable the Google Drive API, then share the remote's Drive
-  folder with the service account's email address. Run `dvc push` once locally
-  so the data actually exists in the remote.
-- **`HF_TOKEN`** — a Hugging Face **write** token. Publishing is skipped
-  (rather than failed) when this is absent.
+- **`GDRIVE_CREDENTIALS_DATA`** — Google credentials that can *read* the Drive
+  folder backing the DVC remote. Without it CI has no dataset, because
+  `data/raw.csv` is intentionally not in git. The workflow accepts either a
+  service-account key (recommended, does not expire) or a cached OAuth user
+  token, and detects which one it was given.
+- **`HF_TOKEN`** — a Hugging Face **write** token. Publishing is skipped rather
+  than failed when this is absent.
+
+The data must also exist in the remote: run `dvc push` locally at least once.
+
+> Push from your own Google account, not the service account. Service accounts
+> have no Drive storage quota of their own, so uploading into a personal My
+> Drive folder fails with `storageQuotaExceeded`. Reading is unaffected, which
+> is all CI does.
 
 The workflow trains on every push and pull request, but only publishes from
 `main`.

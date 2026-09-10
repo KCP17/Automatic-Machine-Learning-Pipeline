@@ -54,7 +54,21 @@ jobs:
 
     - name: Pull dataset from DVC remote
       if: env.GDRIVE_CREDENTIALS_DATA != ''
-      run: dvc pull --verbose
+      run: |
+        # GDRIVE_CREDENTIALS_DATA may hold either a service-account key or a
+        # cached OAuth user token. dvc-gdrive only treats it as a service
+        # account when gdrive_use_service_account is set in the DVC config --
+        # the env var alone is not enough, and without the flag it falls back
+        # to an interactive browser login that can never complete on a runner.
+        # --local writes .dvc/config.local, which is git-ignored, so developer
+        # clones keep using their own Google login.
+        if python -c "import json, os, sys; sys.exit(0 if json.loads(os.environ['GDRIVE_CREDENTIALS_DATA']).get('type') == 'service_account' else 1)"; then
+          echo "Detected a service-account key; enabling service-account auth."
+          dvc remote modify --local storage gdrive_use_service_account true
+        else
+          echo "Detected OAuth user credentials; using them as-is."
+        fi
+        dvc pull --verbose
 
     - name: Verify dataset is present
       run: |
