@@ -7,29 +7,71 @@ on:
       - training/**
       - requirements.txt
       - .github/workflows/**
+  pull_request:
+    paths:
+      - data/**
+      - training/**
+      - requirements.txt
+  workflow_dispatch:
+
+# A newer commit makes an in-flight training run obsolete.
+concurrency:
+  group: train-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   train:
     runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    env:
+      # Surfaced as job-level env so steps can branch on whether a secret exists;
+      # a step's own `env:` block is not visible to its `if:` condition.
+      GDRIVE_CREDENTIALS_DATA: ${{ secrets.GDRIVE_CREDENTIALS_DATA }}
+      HF_TOKEN: ${{ secrets.HF_TOKEN }}
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
 
     - name: Set up Python
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
-        python-version: "3.10"
+        python-version: "3.11"
+        cache: pip
+        cache-dependency-path: requirements.txt
 
     - name: Install dependencies
+      # CPU wheels only — the default CUDA build of torch is ~2.5 GB and the
+      # GitHub-hosted runners have no GPU.
       run: |
-        pip install -r requirements.txt
+        pip install --upgrade pip
+        pip install --extra-index-url https://download.pytorch.org/whl/cpu -r requirements.txt
+
+    - name: Pull dataset from DVC remote
+      if: env.GDRIVE_CREDENTIALS_DATA != ''
+      run: dvc pull --verbose
+
+    - name: Verify dataset is present
+      run: |
+        if [ ! -f data/raw.csv ]; then
+          echo "::error::data/raw.csv is missing. It is tracked by DVC and not stored in git."
+          echo "::error::Add a GDRIVE_CREDENTIALS_DATA repository secret (a Google service-account"
+          echo "::error::JSON with access to the DVC remote) so this workflow can run 'dvc pull'."
+          exit 1
+        fi
+        wc -l data/raw.csv
 
     - name: Train model
-      run: |
-        python training/train.py
+      run: python training/train.py
+
+    - name: Upload model as workflow artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: model-${{ github.run_number }}
+        path: models/model_*
+        retention-days: 14
 
     - name: Push model to Hugging Face
-      env:
-        HF_TOKEN: ${{ secrets.HF_TOKEN }}
-      run: |
-        python training/push_model.py
+      # Only publish from the default branch, and only when a token is configured.
+      if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request' && env.HF_TOKEN != ''
+      run: python training/push_model.py

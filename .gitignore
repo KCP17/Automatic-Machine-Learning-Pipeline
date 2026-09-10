@@ -1,13 +1,16 @@
-# Trained models (NEVER push to GitHub)
-training/models/
+# Trained models and training logs (NEVER push to GitHub — they go to the HF Hub)
+models/
+logs/
 
-# Hugging Face cache
+# Hugging Face / dataset caches
 .cache/
 .huggingface/
 
 # Python
 __pycache__/
 *.pyc
+.venv/
+venv/
 
 # Secrets
 .env
