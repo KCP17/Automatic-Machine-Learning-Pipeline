@@ -41,11 +41,16 @@ jobs:
         cache-dependency-path: requirements.txt
 
     - name: Install dependencies
-      # CPU wheels only — the default CUDA build of torch is ~2.5 GB and the
-      # GitHub-hosted runners have no GPU.
+      # Install torch from the CPU index FIRST: PyPI's linux torch wheel is the
+      # ~2.5 GB CUDA build and these runners have no GPU. It has to be a
+      # separate --index-url install, because with --extra-index-url pip still
+      # ranks the PyPI CUDA wheel as an equally valid candidate. The subsequent
+      # requirements install then sees torch already satisfied.
       run: |
         pip install --upgrade pip
-        pip install --extra-index-url https://download.pytorch.org/whl/cpu -r requirements.txt
+        pip install --index-url https://download.pytorch.org/whl/cpu torch
+        pip install -r requirements.txt
+        python -c "import torch; print('torch', torch.__version__)"
 
     - name: Pull dataset from DVC remote
       if: env.GDRIVE_CREDENTIALS_DATA != ''
