@@ -27,7 +27,7 @@ OUT_FILE = REPO_ROOT / "data" / "raw.csv"
 
 SOURCE = os.getenv("SOURCE_DATASET", "cornell-movie-review-data/rotten_tomatoes")
 SPLIT = os.getenv("SOURCE_SPLIT", "train")
-SAMPLE_SIZE = int(os.getenv("SAMPLE_SIZE", "3000"))
+SAMPLE_SIZE = int(os.getenv("SAMPLE_SIZE", "4000"))  # regenerates the committed data/raw.csv
 SEED = int(os.getenv("SEED", "42"))
 
 _WHITESPACE = re.compile(r"\s+")
